@@ -1,0 +1,59 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+jspm_packages/
+bower_components/
+
+# Build output
+dist/
+build/
+coverage/
+.next/
+.nuxt/
+out/
+.svelte-kit/
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+
+# dotenv environment files
+.env
+.env.*
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Mac / Windows system files
+.DS_Store
+Thumbs.db
+
+# Optional: 
+# Ignore lock files if your team doesn’t use them
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+config.json
