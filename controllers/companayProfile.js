@@ -4,6 +4,9 @@ const db = require("../db/db");
 const { authToken } = require("../middleware/auth");
 
 
+
+// main company
+
 router.post("/company", authToken, async (req, res) => {
   try {
     const userMobile = req.user.mobile;  
@@ -70,5 +73,101 @@ router.get("/company", authToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+// other detais 
+
+router.get("/other-details/:company_name", async (req, res) => {
+  try {
+    const companyName = req.params.company_name;
+
+    const [company] = await db.execute(
+      "SELECT * FROM company_profile WHERE company_name = ?",
+      [companyName]
+    );
+
+    if (company.length === 0) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+
+    const [details] = await db.execute(
+      `
+      SELECT *
+      FROM other_details
+      WHERE company_name = ?
+      ORDER BY id DESC
+      `,
+      [companyName]
+    );
+
+    return res.status(200).json({
+      company: companyName,
+      total_records: details.length,
+      data: details
+    });
+
+  } catch (err) {
+    console.error("other-details GET error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+router.post("/other-details/:company_name", async (req, res) => {
+  try {
+    const companyName = req.params.company_name;
+
+    const { invoice_date, due_date, reference } = req.body;
+
+
+    const [company] = await db.execute(
+      "SELECT * FROM company_profile WHERE company_name = ?",
+      [companyName]
+    );
+
+    if (company.length === 0) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+
+    await db.execute(
+      `
+      INSERT INTO other_details
+      (company_name, invoice_date, due_date, reference)
+      VALUES (?, ?, ?, ?)
+      `,
+      [
+        companyName,
+        invoice_date || null,
+        due_date || null,
+        reference || null
+      ]
+    );
+
+   
+    const [saved] = await db.execute(
+      `
+      SELECT *
+      FROM other_details
+      WHERE company_name = ?
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [companyName]
+    );
+
+    return res.status(200).json({
+      message: "Other details created successfully",
+      data: saved[0]
+    });
+
+  } catch (err) {
+    console.error("other-details POST error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 
 module.exports = router;
