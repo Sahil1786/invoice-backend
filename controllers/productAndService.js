@@ -181,7 +181,7 @@ router.get("/product-service/:companyName",authToken, async (req, res) => {
   try {
     const { companyName } = req.params;
 
-    // Validate company
+ 
     const [company] = await db.execute(
       "SELECT id FROM company_profile WHERE company_name = ?",
       [companyName]
@@ -191,7 +191,7 @@ router.get("/product-service/:companyName",authToken, async (req, res) => {
       return res.status(404).json({ message: "Company not found" });
     }
 
-    // Fetch data from 3 tables using JOIN
+
     const [data] = await db.execute(
       `SELECT 
           ps.*, 
@@ -226,6 +226,9 @@ router.get("/product-service/:companyName",authToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
 
 
 
