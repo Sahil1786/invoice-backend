@@ -17,10 +17,10 @@ router.post("/signup", async (req, res) => {
   try {
     const { name, mobile, email, otp } = req.body;
 
-    // Step 1: Verify OTP
+   
     await AuthService.verifySignupOtp(mobile, otp);
 
-    // Step 2: Create user
+ 
     const result = await AuthService.createUser(name, mobile, email);
 
     res.json(result);
