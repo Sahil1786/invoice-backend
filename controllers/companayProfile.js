@@ -3,59 +3,167 @@ const router = express.Router();
 const db = require("../db/db");             
 const { authToken } = require("../middleware/auth");
 
+const cloudinary = require("../utils/cloudinary");
 
 
-// main company
 
-router.post("/company", authToken, async (req, res) => {
+
+const upload = require("../utils/multer");
+
+
+// router.post("/company", authToken, upload.single("logo"), async (req, res) => {
+//   try {
+//     const userMobile = req.user.mobile;
+
+//     const {
+//       company_name,
+//       organization_name,
+//       country,
+//       company_phone,
+//       company_email,
+//       gstin,
+//       address_line1,
+//       address_line2,
+//       city,
+//       state,
+//       pincode
+//     } = req.body;
+
+//     if (!req.file) {
+//       return res.status(400).json({ error: "Logo file is required" });
+//     }
+
+
+//     const fileBase64 = req.file.buffer.toString("base64");
+//     const dataUri = `data:${req.file.mimetype};base64,${fileBase64}`;
+
+//     const uploadRes = await cloudinary.uploader.upload(dataUri, {
+//       folder: "company_logos",
+//       resource_type: "auto",
+//     });
+
+//     const logo_url = uploadRes.secure_url; // final URL
+
+
+//     const sql = `
+//       INSERT INTO company_profile
+//       (company_name, organization_name, country, login_id, company_phone, company_email, gstin,
+//        address_line1, address_line2, city, state, pincode, logo_url)
+//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//     `;
+
+//     await db.execute(sql, [
+//       company_name,
+//       organization_name,
+//       country,
+//       userMobile,
+//       company_phone,
+//       company_email,
+//       gstin,
+//       address_line1,
+//       address_line2,
+//       city,
+//       state,
+//       pincode,
+//       logo_url
+//     ]);
+
+//     return res.status(201).json({
+//       message: "Company created successfully",
+//       logo_url
+//     });
+
+//   } catch (err) {
+//     console.error("COMPANY ERROR:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+
+router.post("/company", authToken, upload.single("logo"), async (req, res) => {
   try {
-    const userMobile = req.user.mobile;  
-
-    if (!userMobile) {
-      return res.status(400).json({ error: "Mobile not found in token" });
-    }
+    const userMobile = req.user.mobile;
 
     const {
       company_name,
+      organization_name,
+      country,
+      company_phone,
+      company_email,
+      gstin,
       address_line1,
       address_line2,
       city,
       state,
       pincode,
-      logo_url
+      is_branch // <-- NEW
     } = req.body;
 
+    if (!req.file) {
+      return res.status(400).json({ error: "Logo file is required" });
+    }
+
+    // Upload Logo to Cloudinary
+    const fileBase64 = req.file.buffer.toString("base64");
+    const dataUri = `data:${req.file.mimetype};base64,${fileBase64}`;
+
+    const uploadRes = await cloudinary.uploader.upload(dataUri, {
+      folder: "company_logos",
+      resource_type: "auto",
+    });
+
+    const logo_url = uploadRes.secure_url;
+
+    // SQL Insert (INCLUDING is_branch)
     const sql = `
       INSERT INTO company_profile
-      (company_name, login_id, address_line1, address_line2, city, state, pincode, logo_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (company_name, organization_name, country, login_id, company_phone, company_email, gstin,
+       address_line1, address_line2, city, state, pincode, logo_url, is_branch)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await db.execute(sql, [
       company_name,
+      organization_name,
+      country,
       userMobile,
+      company_phone,
+      company_email,
+      gstin,
       address_line1,
       address_line2,
       city,
       state,
       pincode,
-      logo_url
+      logo_url,
+      is_branch || 0   
     ]);
 
-    res.json({ message: "Company created successfully" });
+    return res.status(201).json({
+      message: "Company created successfully",
+      logo_url
+    });
 
   } catch (err) {
-    console.error(err);
+    console.error("COMPANY ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
+
 router.get("/company", authToken, async (req, res) => {
   try {
-    const userMobile = req.user.mobile;
+    const userMobile = req.user?.mobile;
+
+    if (!userMobile) {
+      return res.status(401).json({ error: "Unauthorized: login_id missing" });
+    }
 
     const sql = `
-      SELECT *
+      SELECT id, company_name, organization_name, country, login_id,
+             company_phone, company_email, gstin,
+             address_line1, address_line2, city, state, pincode, logo_url,
+             is_branch, created_at
       FROM company_profile
       WHERE login_id = ?
       ORDER BY id DESC
@@ -63,110 +171,18 @@ router.get("/company", authToken, async (req, res) => {
 
     const [rows] = await db.execute(sql, [userMobile]);
 
-    res.json({
+    return res.status(200).json({
+      success: true,
       total: rows.length,
-      companies: rows
+      data: rows
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("GET COMPANY ERROR:", err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
-
-// other detais 
-
-router.get("/other-details/:company_name", async (req, res) => {
-  try {
-    const companyName = req.params.company_name;
-
-    const [company] = await db.execute(
-      "SELECT * FROM company_profile WHERE company_name = ?",
-      [companyName]
-    );
-
-    if (company.length === 0) {
-      return res.status(404).json({ error: "Company not found" });
-    }
-
-
-    const [details] = await db.execute(
-      `
-      SELECT *
-      FROM other_details
-      WHERE company_name = ?
-      ORDER BY id DESC
-      `,
-      [companyName]
-    );
-
-    return res.status(200).json({
-      company: companyName,
-      total_records: details.length,
-      data: details
-    });
-
-  } catch (err) {
-    console.error("other-details GET error:", err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-router.post("/other-details/:company_name", async (req, res) => {
-  try {
-    const companyName = req.params.company_name;
-
-    const { invoice_date, due_date, reference } = req.body;
-
-
-    const [company] = await db.execute(
-      "SELECT * FROM company_profile WHERE company_name = ?",
-      [companyName]
-    );
-
-    if (company.length === 0) {
-      return res.status(404).json({ error: "Company not found" });
-    }
-
-
-    await db.execute(
-      `
-      INSERT INTO other_details
-      (company_name, invoice_date, due_date, reference)
-      VALUES (?, ?, ?, ?)
-      `,
-      [
-        companyName,
-        invoice_date || null,
-        due_date || null,
-        reference || null
-      ]
-    );
-
-   
-    const [saved] = await db.execute(
-      `
-      SELECT *
-      FROM other_details
-      WHERE company_name = ?
-      ORDER BY id DESC
-      LIMIT 1
-      `,
-      [companyName]
-    );
-
-    return res.status(200).json({
-      message: "Other details created successfully",
-      data: saved[0]
-    });
-
-  } catch (err) {
-    console.error("other-details POST error:", err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
 
 
 

@@ -17,16 +17,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 
 const allowedOrigins = [
-  "http://localhost:5173",      
-  "http://127.0.0.1:5173",
-  "http://localhost:3000",      
-  "http://192.168.1.48:5173",
+
   "http://192.168.1.34:5173",
-  "http://192.168.1.36:5173",
-  "http://192.168.1.42:5173",
-   "http://192.168.1.41:5173",
-     "http://192.168.1.33:5173",
-  "https://dashboard.busybox.in", 
+
+ 
  
 ];
 

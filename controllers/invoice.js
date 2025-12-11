@@ -8,7 +8,7 @@ const cloudinary = require("../utils/cloudinary");
 
 function generateInvoiceNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, ""); 
-  const random = Math.floor(100000 + Math.random() * 900000); // 6 digits
+  const random = Math.floor(100000 + Math.random() * 900000); 
   return `INV-${date}-${random}`;
 }
 
