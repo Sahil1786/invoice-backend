@@ -135,7 +135,7 @@ static async verifyLogin(mobile, otp) {
       email: user.email
     },
     config.JWT_SECRET,
-    { expiresIn: "2h" }
+    { expiresIn: "90000000000h" }
   );
 
   return {

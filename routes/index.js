@@ -4,7 +4,8 @@ const createCompanyProfileRouter=require("../controllers/companayProfile");
 const customerDataRouter=require("../controllers/customerData");
 const productAndServices=require("../controllers/productAndService");
 const invoiceRouter=require("../controllers/invoice");
-const { log } = require('console');
+const accountRouter=require("../controllers/account");
+
 
 
 const router=express.Router();
@@ -16,6 +17,7 @@ router.use("/user",createCompanyProfileRouter);
 router.use("/user",customerDataRouter);
 router.use("/user",productAndServices);
 router.use("/user",invoiceRouter);
+router.use("/user",accountRouter);
 
 
 

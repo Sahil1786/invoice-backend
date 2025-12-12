@@ -18,9 +18,7 @@ app.use(express.urlencoded({ extended: true }))
 
 const allowedOrigins = [
 
-  "http://192.168.1.34:5173",
-
- 
+  "http://192.168.1.37:5173",
  
 ];
 
